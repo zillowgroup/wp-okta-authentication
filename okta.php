@@ -201,8 +201,9 @@ if( ! class_exists( 'Okta' ) ) {
         Create the user
         */
 
+        $username = apply_filters( $user->preferred_username, $user );
         $user_id = wp_insert_user ( array(
-          'user_login' => $user->preferred_username,
+          'user_login' => $username,
           'password' => wp_generate_password()
         ) );
         if ( is_wp_error ( $user_id ) ) {
