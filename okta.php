@@ -201,7 +201,7 @@ if( ! class_exists( 'Okta' ) ) {
         Create the user
         */
 
-        $username = apply_filters( $user->preferred_username, $user );
+        $username = apply_filters( 'okta_username', $user );
         $user_id = wp_insert_user ( array(
           'user_login' => $username,
           'password' => wp_generate_password()
@@ -249,7 +249,7 @@ if( ! class_exists( 'Okta' ) ) {
 
     function LoginMessage () {
 
-      $url = $this->base_url . '/authorize?' . $query = http_build_query (
+      $url = apply_filters ( 'okta_login', $this->base_url . '/authorize?' . $query = http_build_query (
         [
           'client_id' => $this->client_id,
           'response_type' => 'code',
@@ -259,7 +259,7 @@ if( ! class_exists( 'Okta' ) ) {
           'state' => 'wordpress',
           'nonce' => wp_create_nonce( 'okta' )
         ]
-      );
+      ) );
 
       ?>
       <style>
