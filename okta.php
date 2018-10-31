@@ -195,7 +195,7 @@ if( ! class_exists( 'Okta' ) ) {
       Get the username
       */
 
-      $username = $user->preferred_username
+      $username = $user->preferred_username;
 
       /*
       Modify the username if necessary
