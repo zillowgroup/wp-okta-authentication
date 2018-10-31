@@ -192,6 +192,20 @@ if( ! class_exists( 'Okta' ) ) {
     function Login ( $user ){
 
       /*
+      Get the username
+      */
+
+      $username = $user->preferred_username
+
+      /*
+      Modify the username if necessary
+      */
+
+      if ( has_filter ( 'okta_username' ) ) {
+        $username = apply_filters ( 'okta_username', $user );
+      }
+
+      /*
       Check to see if the user already exists
       */
 
@@ -201,7 +215,6 @@ if( ! class_exists( 'Okta' ) ) {
         Create the user
         */
 
-        $username = apply_filters( 'okta_username', $user->preferred_username );
         $user_id = wp_insert_user ( array(
           'user_login' => $username,
           'password' => wp_generate_password()
