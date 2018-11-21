@@ -217,7 +217,7 @@ if( ! class_exists( 'Okta' ) ) {
 
         $user_id = wp_insert_user ( array(
           'user_login' => $username,
-          'password' => wp_generate_password()
+          'user_pass'  => wp_generate_password()
         ) );
         if ( is_wp_error ( $user_id ) ) {
           die( $user_id->get_error_message() );
