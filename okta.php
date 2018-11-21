@@ -443,10 +443,10 @@ if( ! class_exists( 'Okta' ) ) {
       Validate the request via nonce, referrer and capabilities
       */
 
-      if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'okta' ) || ! current_user_can( 'manage_network_options' ) ) {
+      if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'okta-options' ) || ! current_user_can( 'manage_network_options' ) ) {
         wp_die( 'No dice.' );
       }else{
-        check_admin_referer( 'okta' );
+        check_admin_referer( 'okta-options' );
       }
 
       /*
@@ -457,10 +457,10 @@ if( ! class_exists( 'Okta' ) ) {
         update_site_option( 'okta_org_url', esc_url_raw( $_POST['okta_org_url'], array( 'https' ) ) );
       }
       if ( isset( $_POST['okta_client_id'] ) ) {
-        update_site_option( 'okta_client_id', sanitize_key( $_POST['okta_client_id'] ) );
+        update_site_option( 'okta_client_id', sanitize_text_field( $_POST['okta_client_id'] ) );
       }
       if ( isset( $_POST['okta_client_secret'] ) ) {
-        update_site_option( 'okta_client_secret', sanitize_key( $_POST['okta_client_secret'] ) );
+        update_site_option( 'okta_client_secret', sanitize_text_field( $_POST['okta_client_secret'] ) );
       }
 
       /*
