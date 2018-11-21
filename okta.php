@@ -28,9 +28,11 @@ if( ! class_exists( 'Okta' ) ) {
       if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
         require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
       }
-      $this->org_url = defined( 'OKTA_ORG_URL' ) ? OKTA_ORG_URL : ( is_plugin_active_for_network( 'okta/okta.php' ) ? get_site_option( 'okta_org_url' ) : get_option( 'okta_org_url' ) );
-      $this->client_id = defined( 'OKTA_CLIENT_ID' ) ? OKTA_CLIENT_ID : ( is_plugin_active_for_network( 'okta/okta.php' ) ? get_site_option( 'okta_client_id' ) : get_option( 'okta_client_id' ) );
-      $this->client_secret = defined( 'OKTA_CLIENT_SECRET' ) ? OKTA_CLIENT_SECRET : ( is_plugin_active_for_network( 'okta/okta.php' ) ? get_site_option( 'okta_client_secret' ) : get_option( 'okta_client_secret' ) );
+      $is_network = is_plugin_active_for_network( 'okta/okta.php' );
+
+      $this->org_url = defined( 'OKTA_ORG_URL' ) ? OKTA_ORG_URL : ( $is_network ? get_site_option( 'okta_org_url' ) : get_option( 'okta_org_url' ) );
+      $this->client_id = defined( 'OKTA_CLIENT_ID' ) ? OKTA_CLIENT_ID : ( $is_network ? get_site_option( 'okta_client_id' ) : get_option( 'okta_client_id' ) );
+      $this->client_secret = defined( 'OKTA_CLIENT_SECRET' ) ? OKTA_CLIENT_SECRET : ( $is_network ? get_site_option( 'okta_client_secret' ) : get_option( 'okta_client_secret' ) );
       $this->auth_secret = base64_encode( $this->client_id . ':' . $this->client_secret );
       $this->base_url = $this->org_url . '/oauth2/default/v1';
 
@@ -56,9 +58,12 @@ if( ! class_exists( 'Okta' ) ) {
       Admin menu
       */
 
-      add_action( 'admin_menu', array( $this, 'AdminMenu' ) );
-      add_action( 'network_admin_menu', array( $this, 'NetworkAdminMenu' ) );
-      add_action( 'network_admin_edit_okta', array ( $this, 'SettingsSave' ) );
+      if ( $is_network ){
+        add_action( 'network_admin_menu', array( $this, 'NetworkAdminMenu' ) );
+        add_action( 'network_admin_edit_okta', array ( $this, 'SettingsSave' ) );
+      }else{
+        add_action( 'admin_menu', array( $this, 'AdminMenu' ) );
+      }
 
       /*
       Deactivation
