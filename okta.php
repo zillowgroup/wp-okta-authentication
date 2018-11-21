@@ -293,7 +293,7 @@ if( ! class_exists( 'Okta' ) ) {
           'response_type' => 'code',
           'response_mode' => 'query',
           'scope' => 'openid profile',
-          'redirect_uri' => get_rest_url( is_multisite() ? get_current_site()->blog_id : null, 'okta/auth' ),
+          'redirect_uri' => get_rest_url( null, 'okta/auth' ),
           'state' => 'wordpress',
           'nonce' => wp_create_nonce( 'okta' )
         ]
