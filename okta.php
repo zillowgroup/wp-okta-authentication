@@ -28,9 +28,11 @@ if( ! class_exists( 'Okta' ) ) {
       if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
         require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
       }
-      $this->org_url = defined( 'OKTA_ORG_URL' ) ? OKTA_ORG_URL : ( is_plugin_active_for_network( 'okta/okta.php' ) ? get_site_option( 'okta_org_url' ) : get_option( 'okta_org_url' ) );
-      $this->client_id = defined( 'OKTA_CLIENT_ID' ) ? OKTA_CLIENT_ID : ( is_plugin_active_for_network( 'okta/okta.php' ) ? get_site_option( 'okta_client_id' ) : get_option( 'okta_client_id' ) );
-      $this->client_secret = defined( 'OKTA_CLIENT_SECRET' ) ? OKTA_CLIENT_SECRET : ( is_plugin_active_for_network( 'okta/okta.php' ) ? get_site_option( 'okta_client_secret' ) : get_option( 'okta_client_secret' ) );
+      $is_network = is_plugin_active_for_network( 'okta/okta.php' );
+
+      $this->org_url = defined( 'OKTA_ORG_URL' ) ? OKTA_ORG_URL : ( $is_network ? get_site_option( 'okta_org_url' ) : get_option( 'okta_org_url' ) );
+      $this->client_id = defined( 'OKTA_CLIENT_ID' ) ? OKTA_CLIENT_ID : ( $is_network ? get_site_option( 'okta_client_id' ) : get_option( 'okta_client_id' ) );
+      $this->client_secret = defined( 'OKTA_CLIENT_SECRET' ) ? OKTA_CLIENT_SECRET : ( $is_network ? get_site_option( 'okta_client_secret' ) : get_option( 'okta_client_secret' ) );
       $this->auth_secret = base64_encode( $this->client_id . ':' . $this->client_secret );
       $this->base_url = $this->org_url . '/oauth2/default/v1';
 
@@ -56,9 +58,12 @@ if( ! class_exists( 'Okta' ) ) {
       Admin menu
       */
 
-      add_action( 'admin_menu', array( $this, 'AdminMenu' ) );
-      add_action( 'network_admin_menu', array( $this, 'NetworkAdminMenu' ) );
-      add_action( 'network_admin_edit_okta', array ( $this, 'SettingsSave' ) );
+      if ( $is_network ){
+        add_action( 'network_admin_menu', array( $this, 'NetworkAdminMenu' ) );
+        add_action( 'network_admin_edit_okta', array ( $this, 'SettingsSave' ) );
+      }else{
+        add_action( 'admin_menu', array( $this, 'AdminMenu' ) );
+      }
 
       /*
       Deactivation
@@ -103,36 +108,33 @@ if( ! class_exists( 'Okta' ) ) {
 
       $token = $this->Token ( $_GET['code'] );
       if ( is_wp_error( $token ) ) {
-
         die( 'TOKEN ERROR' );
-
-      } else {
-
-        /*
-        Validate the token and return user data
-        */
-
-        $token = json_decode( $token['body'] );
-
-        /*
-        Get user detail
-        */
-
-        $user = $this->User ( $token->access_token );
-        if ( is_wp_error ( $user ) ) {
-          die( 'USER ERROR' );
-        } else {
-
-          /*
-          Login the user
-          */
-
-          $user = json_decode ( $user['body'] );
-          $this->Login ( $user );
-
-        }
-
       }
+
+      /*
+      Validate the token and return user data
+      */
+
+      $token = json_decode( $token['body'] );
+      if ( null === $token || empty ( $token->access_token ) ){
+        die( 'TOKEN ERROR' );
+      }
+
+      /*
+      Get user detail
+      */
+
+      $user = $this->User ( $token->access_token );
+      if ( is_wp_error ( $user ) ) {
+        die( 'USER ERROR' );
+      }
+
+      /*
+      Login the user
+      */
+
+      $user = json_decode ( $user['body'] );
+      $this->Login ( $user );
 
     }
 
@@ -189,49 +191,15 @@ if( ! class_exists( 'Okta' ) ) {
     Login the user
     */
 
-    function Login ( $user ){
-
-      /*
-      Get the username
-      */
-
-      $username = $user->preferred_username;
-
-      /*
-      Modify the username if necessary
-      */
-
-      if ( has_filter ( 'okta_username' ) ) {
-        $username = apply_filters ( 'okta_username', $user );
-      }
-
-      /*
-      Check to see if the user already exists
-      */
-
-      if ( false === ( $user_id = username_exists( $user->preferred_username ) ) ){
-
-        /*
-        Create the user
-        */
-
-        $user_id = wp_insert_user ( array(
-          'user_login' => $username,
-          'user_pass'  => wp_generate_password()
-        ) );
-        if ( is_wp_error ( $user_id ) ) {
-          die( $user_id->get_error_message() );
-        }
-
-      }
+    function Login ( $user_response ){
 
       /*
       Get the user
       */
 
-      $user = get_user_by ( 'id', $user_id );
-      if ( is_wp_error ( $user_id ) ) {
-        die( $user_id->get_error_message() );
+      $user = $this->GetUser ( $user_response );
+      if ( is_wp_error ( $user ) ) {
+        die( $user->get_error_message() );
       }
 
       /*
@@ -257,6 +225,63 @@ if( ! class_exists( 'Okta' ) ) {
     }
 
     /*
+    Gets or creates a user from the user response.
+    */
+
+    function GetUser( $user_response ){
+
+      /*
+      Allow filtering of field to get user ID
+      */
+
+      $user_id = apply_filters ( 'okta_user_get', false, $user_response );
+
+      if ( false === $user_id ) {
+
+        /*
+        Check to see if the user already exists
+        */
+
+        $username = apply_filters ( 'okta_username', $user_response->preferred_username );
+        $user_id  = username_exists ( $username );
+      }
+
+      $default_role = apply_filters ( 'okta_default_role', get_option( 'default_role' ), $user_response );
+
+      /*
+      Create user if not found
+      */
+
+      if ( ! $user_id ){
+
+        $user_data = apply_filters( 'okta_user_insert', array(
+          'user_login' => $username,
+          'user_pass'  => wp_generate_password(),
+          'role'       => $default_role,
+        ), $user_response );
+        $user_id   = wp_insert_user ( $user_data );
+        if ( is_wp_error( $user_id ) ){
+          return $user_id;
+        }
+      }
+
+      $user = get_user_by( 'id', $user_id );
+      if ( is_wp_error( $user ) ){
+        return $user;
+      }
+
+      /*
+      Add user to multisite
+      */
+
+      if ( empty( $user->roles ) ){
+        $user->set_role( $default_role );
+      }
+
+      return $user;
+    }
+
+    /*
     Add the Okta button to wp-login.php
     */
 
@@ -268,7 +293,7 @@ if( ! class_exists( 'Okta' ) ) {
           'response_type' => 'code',
           'response_mode' => 'query',
           'scope' => 'openid profile',
-          'redirect_uri' => get_rest_url( is_multisite() ? get_current_site()->blog_id : null, 'okta/auth' ),
+          'redirect_uri' => get_rest_url( null, 'okta/auth' ),
           'state' => 'wordpress',
           'nonce' => wp_create_nonce( 'okta' )
         ]
@@ -438,10 +463,10 @@ if( ! class_exists( 'Okta' ) ) {
       Validate the request via nonce, referrer and capabilities
       */
 
-      if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'okta' ) || ! current_user_can( 'manage_network_options' ) ) {
+      if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'okta-options' ) || ! current_user_can( 'manage_network_options' ) ) {
         wp_die( 'No dice.' );
       }else{
-        check_admin_referer( 'okta' );
+        check_admin_referer( 'okta-options' );
       }
 
       /*
@@ -452,10 +477,10 @@ if( ! class_exists( 'Okta' ) ) {
         update_site_option( 'okta_org_url', esc_url_raw( $_POST['okta_org_url'], array( 'https' ) ) );
       }
       if ( isset( $_POST['okta_client_id'] ) ) {
-        update_site_option( 'okta_client_id', sanitize_key( $_POST['okta_client_id'] ) );
+        update_site_option( 'okta_client_id', sanitize_text_field( $_POST['okta_client_id'] ) );
       }
       if ( isset( $_POST['okta_client_secret'] ) ) {
-        update_site_option( 'okta_client_secret', sanitize_key( $_POST['okta_client_secret'] ) );
+        update_site_option( 'okta_client_secret', sanitize_text_field( $_POST['okta_client_secret'] ) );
       }
 
       /*
