@@ -299,6 +299,8 @@ if( ! class_exists( 'Okta' ) ) {
         ]
       ) );
 
+      $vendor_name = apply_filters( 'okta_login_name', __( 'Okta', 'okta' ) );
+
       ?>
       <style>
       .okta-logo{
@@ -313,14 +315,17 @@ if( ! class_exists( 'Okta' ) ) {
       </style>
       <form style="padding-bottom: 26px; text-align: center;">
         <div class="okta-logo">
-          Okta
+          <?php echo esc_html( $vendor_name ); ?>
         </div>
-        <a href="<?php echo $url; ?>" class="button">
-          Log In with Okta
+        <a href="<?php echo esc_url( $url ); ?>" class="button">
+          <?php printf(
+            esc_html__( 'Log In with %s', 'okta' ),
+            esc_html( $vendor_name )
+          ); ?>
         </a>
       </form>
       <p style="margin-top: 20px; text-align: center;">
-        or
+        <?php esc_html_e( 'or', 'okta' ); ?>
       </p>
       <?php
 
@@ -367,82 +372,82 @@ if( ! class_exists( 'Okta' ) ) {
       ?>
       <div class="wrap">
         <h1>
-          Okta Authentication
+          <?php esc_html_e( 'Okta Authentication', 'okta' ); ?>
         </h1>
-        <form action="<?php echo is_network_admin() ? network_admin_url( 'edit.php?action=okta' ) : admin_url( 'options.php' ) ; ?>" method="post" autocomplete="off">
+        <form action="<?php echo esc_url( is_network_admin() ? network_admin_url( 'edit.php?action=okta' ) : admin_url( 'options.php' ) ); ?>" method="post" autocomplete="off">
           <?php settings_fields ( 'okta' ); ?>
           <?php do_settings_sections ( 'okta' ); ?>
           <h2 class="title">
-            Step 1
+            <?php esc_html_e( 'Step 1', 'okta' ); ?>
           </h2>
           <p>
             <a href="https://login.okta.com/" target="_blank">Log in</a> to or <a href="https://developer.okta.com/signup/" target="_blank">sign up</a> for an Okta account. It's free to create a developer account.
           </p>
           <h2 class="title">
-            Step 2
+            <?php esc_html_e( 'Step 2', 'okta' ); ?>
           </h2>
           <p>
-            Go to the Dashboard of your Developer Console. At the top right of the screen, you should see your Org URL (ex: https://dev-123.oktapreview.com). Copy and paste that URL into the field below.
+            <?php esc_html_e( 'Go to the Dashboard of your Developer Console. At the top right of the screen, you should see your Org URL (ex: https://dev-123.oktapreview.com). Copy and paste that URL into the field below.', 'okta' ); ?>
           </p>
           <table class="form-table">
             <tr valign="top">
               <th scope="row">
-                <?php _e( 'Org URL', 'okta' ); ?>
+                <?php esc_html_e( 'Org URL', 'okta' ); ?>
               </th>
               <td>
-                <input type="url" name="okta_org_url" value="<?php echo $this->org_url; ?>" size="40"<?php if ( defined( 'OKTA_ORG_URL' ) ) echo ' disabled readonly' ?>>
+                <input type="url" name="okta_org_url" value="<?php echo esc_url( $this->org_url ); ?>" size="40"<?php echo esc_attr( defined( 'OKTA_ORG_URL' ) ? ' disabled readonly' : '' ); ?>>
               </td>
             </tr>
           </table>
           <h2 class="title">
-            Step 3
+            <?php esc_html_e( 'Step 3', 'okta' ); ?>
           </h2>
           <p>
-            Go to the Applications section of your Developer Console. Create a new Web application and enter these URLs when prompted.
+            <?php esc_html_e( 'Go to the Applications section of your Developer Console. Create a new Web application and enter these URLs when prompted.', 'okta' ); ?>
           </p>
           <table class="form-table">
             <tr valign="top">
               <th scope="row">
-                <?php _e( 'Base URI', 'okta' ); ?>
+                <?php esc_html_e( 'Base URI', 'okta' ); ?>
               </th>
               <td>
-                <a href="<?php echo get_site_url(); ?>" target="_blank">
-                  <?php echo get_site_url(); ?>
+                <a href="<?php echo esc_url( get_site_url() ); ?>" target="_blank">
+                  <?php echo esc_url( get_site_url() ); ?>
                 </a>
               </td>
             </tr>
               <tr valign="top">
                 <th scope="row">
-                  <?php _e( 'Login Redirect URI', 'okta' ); ?>
+                  <?php esc_html_e( 'Login Redirect URI', 'okta' ); ?>
                 </th>
                 <td>
-                  <a href="<?php echo get_rest_url( null, 'okta/auth' ); ?>" target="_blank">
-                    <?php echo get_rest_url( null, 'okta/auth' ); ?>
+                  <a href="<?php echo esc_url( get_rest_url( null, 'okta/auth' ) ); ?>" target="_blank">
+                    <?php echo esc_url( get_rest_url( null, 'okta/auth' ) ); ?>
                   </a>
                 </td>
               </tr>
           </table>
           <h2 class="title">
-            Step 4
+            <?php esc_html_e( 'Step 4', 'okta' ); ?>
           </h2>
           <p>
-            Once you've created the application, go to the General tab and scroll down to the Client Credentials section. Copy and paste those values in the fields below.
+            <?php esc_html_e( 'Once you\'ve created the application, go to the General tab and scroll down to the Client Credentials section. Copy and paste those values in the fields below.', 'okta' ); ?>
           </p>
           <table class="form-table">
             <tr valign="top">
               <th scope="row">
-                <?php _e( 'Client ID', 'okta' ); ?>
+                <?php esc_html_e( 'Client ID', 'okta' ); ?>
               </th>
               <td>
-                <input type="text" name="okta_client_id" value="<?php echo $this->client_id; ?>" size="40"<?php if ( defined( 'OKTA_CLIENT_ID' ) ) echo ' disabled readonly' ?>>
+                <input type="text" name="okta_client_id" value="<?php echo esc_attr( $this->client_id ); ?>" size="40"<?php echo esc_attr( defined( 'OKTA_CLIENT_ID' ) ? ' disabled readonly' : '' ); ?>>
               </td>
             </tr>
             <tr valign="top">
               <th scope="row">
-                <?php _e( 'Client Secret', 'okta' ); ?>
+                <?php esc_html_e( 'Client Secret', 'okta' ); ?>
               </th>
               <td>
-                <input type="password" name="okta_client_secret" value="<?php echo $this->client_secret; ?>" size="40"<?php if ( defined( 'OKTA_CLIENT_SECRET' ) ) echo ' disabled readonly' ?>>
+                <input type="password" name="okta_client_secret" value="<?php echo esc_attr( $this->client_secret ); ?>" size="40"<?php echo esc_attr( defined( 'OKTA_CLIENT_SECRET' ) ? ' disabled readonly' : '' ); ?>>
               </td>
             </tr>
           </table>
