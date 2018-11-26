@@ -1,5 +1,5 @@
 === Okta Authentication ===
-Contributors: zillowgroup, heyjones,
+Contributors: zillowgroup, heyjones
 Donate link: https://www.zillowgroup.com
 Tags: okta, authentication
 Requires at least: 3.0.1
